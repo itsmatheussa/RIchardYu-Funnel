@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Funnel - Customer Journey</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff69b4, #ffc0cb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            color: #cccccc;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .funnel-visualization {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            margin: 80px 0;
+        }
+
+        .funnel-level {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: -5px 0;
+        }
+
+        .funnel-shape {
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.1), rgba(255, 192, 203, 0.05));
+            border: 2px solid rgba(255, 105, 180, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s ease;
+        }
+
+        .funnel-level:hover .funnel-shape {
+            border-color: #ff69b4;
+            background: rgba(255, 105, 180, 0.2);
+            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
+            transform: scale(1.05);
+        }
+
+        .funnel-level.active .funnel-shape {
+            border-color: #ff69b4;
+            background: rgba(255, 105, 180, 0.25);
+            box-shadow: 0 0 40px rgba(255, 105, 180, 0.5);
+        }
+
+        /* Different sizes to create funnel effect */
+        .level-1 .funnel-shape { width: 900px; height: 80px; border-radius: 40px; }
+        .level-2 .funnel-shape { width: 820px; height: 75px; border-radius: 37px; }
+        .level-3 .funnel-shape { width: 740px; height: 70px; border-radius: 35px; }
+        .level-4 .funnel-shape { width: 660px; height: 65px; border-radius: 32px; }
+        .level-5 .funnel-shape { width: 580px; height: 60px; border-radius: 30px; }
+        .level-6 .funnel-shape { width: 500px; height: 55px; border-radius: 27px; }
+        .level-7 .funnel-shape { width: 460px; height: 50px; border-radius: 25px; }
+        .level-8 .funnel-shape { width: 420px; height: 45px; border-radius: 22px; }
+        .level-9 .funnel-shape { width: 380px; height: 40px; border-radius: 20px; }
+        .level-10 .funnel-shape { width: 340px; height: 35px; border-radius: 17px; }
+        .level-11 .funnel-shape { width: 300px; height: 30px; border-radius: 15px; }
+        .level-12 .funnel-shape { width: 260px; height: 25px; border-radius: 12px; }
+
+        .step-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #ff69b4, #ffc0cb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .step-info {
+            flex: 1;
+            text-align: left;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .step-title {
+            font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .step-subtitle {
+            font-size: clamp(0.6rem, 1.4vw, 0.75rem);
+            color: #cccccc;
+            opacity: 0.8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .step-metrics {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 40px;
+        }
+
+        .metric-value {
+            font-size: clamp(0.8rem, 1.6vw, 0.9rem);
+            font-weight: bold;
+            color: #ff69b4;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: clamp(0.5rem, 0.9vw, 0.6rem);
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        /* Further scale font sizes for smaller funnel levels */
+        .level-7 .step-title, .level-8 .step-title, .level-9 .step-title,
+        .level-10 .step-title, .level-11 .step-title, .level-12 .step-title {
+            font-size: clamp(0.6rem, 1.6vw, 0.8rem);
+        }
+
+        .level-7 .step-subtitle, .level-8 .step-subtitle, .level-9 .step-subtitle,
+        .level-10 .step-subtitle, .level-11 .step-subtitle, .level-12 .step-subtitle {
+            font-size: clamp(0.5rem, 1.2vw, 0.65rem);
+        }
+
+        .level-7 .metric-value, .level-8 .metric-value, .level-9 .metric-value,
+        .level-10 .metric-value, .level-11 .metric-value, .level-12 .metric-value {
+            font-size: clamp(0.7rem, 1.4vw, 0.8rem);
+        }
+
+        .level-7 .metric-label, .level-8 .metric-label, .level-9 .metric-label,
+        .level-10 .metric-label, .level-11 .metric-label, .level-12 .metric-label {
+            font-size: clamp(0.45rem, 0.8vw, 0.55rem);
+        }
+
+        .character {
+            position: fixed;
+            right: 30px;
+            top: 20%;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #ff69b4, #ffc0cb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            box-shadow: 0 15px 40px rgba(255, 105, 180, 0.4);
+            border: 4px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .character::before {
+            content: '🎯';
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            z-index: 1001;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #ff69b4;
+            border-radius: 20px;
+            padding: 30px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1002;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show, .modal-overlay.show {
+            display: block;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 105, 180, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .modal-title {
+            color: #ff69b4;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #ff69b4;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #ffc0cb;
+        }
+
+        .modal-content {
+            color: #cccccc;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .modal-content h3 {
+            color: #ff69b4;
+            font-size: 1.3rem;
+            margin: 20px 0 10px;
+        }
+
+        .modal-content ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .modal-content li {
+            margin-bottom: 10px;
+        }
+
+        .funnel-connector {
+            width: 2px;
+            height: 15px;
+            background: linear-gradient(180deg, rgba(255, 105, 180, 0.8), rgba(255, 105, 180, 0.3));
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .total-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 60px 0 40px 0;
+            text-align: center;
+        }
+
+        .total-stat {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 105, 180, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .total-stat:hover {
+            border-color: #ff69b4;
+            background: rgba(255, 105, 180, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .total-stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff69b4;
+        }
+
+        .total-stat-label {
+            color: #cccccc;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .container {
+                padding: 20px 10px;
+            }
+
+            .step-metrics {
+                display: none;
+            }
+
+            /* Adjust sizes for mobile */
+            .level-1 .funnel-shape { width: 320px; height: 60px; }
+            .level-2 .funnel-shape { width: 300px; height: 58px; }
+            .level-3 .funnel-shape { width: 280px; height: 56px; }
+            .level-4 .funnel-shape { width: 260px; height: 54px; }
+            .level-5 .funnel-shape { width: 240px; height: 52px; }
+            .level-6 .funnel-shape { width: 220px; height: 50px; }
+            .level-7 .funnel-shape { width: 210px; height: 48px; }
+            .level-8 .funnel-shape { width: 200px; height: 46px; }
+            .level-9 .funnel-shape { width: 190px; height: 44px; }
+            .level-10 .funnel-shape { width: 180px; height: 42px; }
+            .level-11 .funnel-shape { width: 170px; height: 40px; }
+            .level-12 .funnel-shape { width: 160px; height: 38px; }
+
+            .step-content {
+                padding: 0 8px;
+            }
+
+            .step-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
+                margin-right: 8px;
+            }
+
+            .step-title {
+                font-size: clamp(0.65rem, 2.8vw, 0.8rem);
+            }
+
+            .step-subtitle {
+                font-size: clamp(0.55rem, 2.3vw, 0.7rem);
+            }
+
+            .level-7 .step-title, .level-8 .step-title, .level-9 .step-title,
+            .level-10 .step-title, .level-11 .step-title, .level-12 .step-title {
+                font-size: clamp(0.6rem, 2.5vw, 0.75rem);
+            }
+
+            .level-7 .step-subtitle, .level-8 .step-subtitle, .level-9 .step-subtitle,
+            .level-10 .step-subtitle, .level-11 .step-subtitle, .level-12 .step-subtitle {
+                font-size: clamp(0.5rem, 2vw, 0.65rem);
+            }
+
+            .modal {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .modal-title {
+                font-size: 1.5rem;
+            }
+
+            .modal-content {
+                font-size: 0.9rem;
+            }
+
+            .character {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Strategic Conversion Funnel</h1>
+            <p>Visualize how we transform leads into strategic partners through an optimized high-performance funnel</p>
+        </div>
+
+        <div class="total-stats">
+            <div class="total-stat">
+                <div class="total-stat-value">24M</div>
+                <div class="total-stat-label">Monthly Views</div>
+            </div>
+            <div class="total-stat">
+                <div class="total-stat-value">8%</div>
+                <div class="total-stat-label">Overall Conversion Rate</div>
+            </div>
+            <div class="total-stat">
+                <div class="total-stat-value">$900K</div>
+                <div class="total-stat-label">Average Partner LTV</div>
+            </div>
+            <div class="total-stat">
+                <div class="total-stat-value">18M</div>
+                <div class="total-stat-label">Average Cycle (months)</div>
+            </div>
+        </div>
+
+        <div class="funnel-visualization">
+            <div class="funnel-level level-1" data-step="1">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">🎯</div>
+                        <div class="step-info">
+                            <div class="step-title">Instagram Reel</div>
+                            <div class="step-subtitle">First Impact - Strategic Hook</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">12M</div>
+                                <div class="metric-label">Views</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">65%</div>
+                                <div class="metric-label">Retention</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-2" data-step="2">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">📱</div>
+                        <div class="step-info">
+                            <div class="step-title">Instagram Page</div>
+                            <div class="step-subtitle">Authority Building</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">1.8M</div>
+                                <div class="metric-label">Visits</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">20%</div>
+                                <div class="metric-label">Follow</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-3" data-step="3">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">📖</div>
+                        <div class="step-info">
+                            <div class="step-title">Instagram Stories</div>
+                            <div class="step-subtitle">Proximity and Reciprocity</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">2.4M</div>
+                                <div class="metric-label">Views</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">85%</div>
+                                <div class="metric-label">Engage</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-4" data-step="4">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">💰</div>
+                        <div class="step-info">
+                            <div class="step-title">View Ad</div>
+                            <div class="step-subtitle">Qualified Retargeting</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">720K</div>
+                                <div class="metric-label">Reach</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">3%</div>
+                                <div class="metric-label">CTR</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-5" data-step="5">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">🎁</div>
+                        <div class="step-info">
+                            <div class="step-title">Lead Magnet Page</div>
+                            <div class="step-subtitle">AI Course - Genuine Value</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">21.6K</div>
+                                <div class="metric-label">Visitors</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">40%</div>
+                                <div class="metric-label">Convert</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-6" data-step="6">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">📧</div>
+                        <div class="step-info">
+                            <div class="step-title">Email Capture</div>
+                            <div class="step-subtitle">Nurture Sequence</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">8.64K</div>
+                                <div class="metric-label">Leads</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">60%</div>
+                                <div class="metric-label">Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-7" data-step="7">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">👥</div>
+                        <div class="step-info">
+                            <div class="step-title">Free Community</div>
+                            <div class="step-subtitle">Networking and Belonging</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">5.16K</div>
+                                <div class="metric-label">Members</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">75%</div>
+                                <div class="metric-label">Retention</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-8" data-step="8">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">📺</div>
+                        <div class="step-info">
+                            <div class="step-title">Community Lives</div>
+                            <div class="step-subtitle">Potential Identification</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">3.87K</div>
+                                <div class="metric-label">Attend</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">50%</div>
+                                <div class="metric-label">Engage</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-9" data-step="9">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">💎</div>
+                        <div class="step-info">
+                            <div class="step-title">VIP Community</div>
+                            <div class="step-subtitle">Status and Exclusivity</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">1.92K</div>
+                                <div class="metric-label">VIPs</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">10%</div>
+                                <div class="metric-label">Convert</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-10" data-step="10">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">🎓</div>
+                        <div class="step-info">
+                            <div class="step-title">Premium Courses</div>
+                            <div class="step-subtitle">Advanced Implementation</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">960</div>
+                                <div class="metric-label">Active</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">85%</div>
+                                <div class="metric-label">Complete</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-11" data-step="11">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">👨‍🏫</div>
+                        <div class="step-info">
+                            <div class="step-title">Mentorship</div>
+                            <div class="step-subtitle">Scale 10k → 100k</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">240</div>
+                                <div class="metric-label">Mentees</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">300%</div>
+                                <div class="metric-label">ROI</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="funnel-connector"></div>
+
+            <div class="funnel-level level-12" data-step="12">
+                <div class="funnel-shape">
+                    <div class="step-content">
+                        <div class="step-icon">🤝</div>
+                        <div class="step-info">
+                            <div class="step-title">Equity Partnership</div>
+                            <div class="step-subtitle">Strategic Partners</div>
+                        </div>
+                        <div class="step-metrics">
+                            <div class="metric">
+                                <div class="metric-value">60</div>
+                                <div class="metric-label">Partners</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">$900K</div>
+                                <div class="metric-label">LTV</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="character" id="character"></div>
+    
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="modal">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modalTitle">Phase Details</h2>
+            <button class="modal-close" id="modalClose">×</button>
+        </div>
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <script>
+        const levels = document.querySelectorAll('.funnel-level');
+        const character = document.getElementById('character');
+        const modal = document.getElementById('modal');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const modalClose = document.getElementById('modalClose');
+
+        const levelInfo = {
+            1: {
+                title: "Instagram Reel - Top of Funnel",
+                emoji: "🎯",
+                stat1: { value: "12M", label: "Monthly Reach" },
+                stat2: { value: "65%", label: "Retention Rate" }
+            },
+            2: {
+                title: "Instagram Page - Trust Building",
+                emoji: "📱",
+                stat1: { value: "1.8M", label: "Visits/Month" },
+                stat2: { value: "20%", label: "Follow Rate" }
+            },
+            3: {
+                title: "Instagram Stories - Proximity",
+                emoji: "📖",
+                stat1: { value: "2.4M", label: "Stories Views" },
+                stat2: { value: "85%", label: "Engagement" }
+            },
+            4: {
+                title: "Strategic Ad - Retargeting",
+                emoji: "💰",
+                stat1: { value: "720K", label: "Ad Reach" },
+                stat2: { value: "3%", label: "Average CTR" }
+            },
+            5: {
+                title: "Lead Magnet - Basic AI Course",
+                emoji: "🎁",
+                stat1: { value: "21.6K", label: "Visitors" },
+                stat2: { value: "40%", label: "Conversion Rate" }
+            },
+            6: {
+                title: "Email Capture - Nurture Sequence",
+                emoji: "📧",
+                stat1: { value: "8.64K", label: "Leads" },
+                stat2: { value: "60%", label: "Capture Rate" }
+            },
+            7: {
+                title: "Free Community - Connection",
+                emoji: "👥",
+                stat1: { value: "5.16K", label: "Members" },
+                stat2: { value: "75%", label: "Retention Rate" }
+            },
+            8: {
+                title: "Community Lives - Engagement",
+                emoji: "📺",
+                stat1: { value: "3.87K", label: "Attendees" },
+                stat2: { value: "50%", label: "Engagement Rate" }
+            },
+            9: {
+                title: "VIP Community - Exclusivity",
+                emoji: "💎",
+                stat1: { value: "1.92K", label: "VIP Members" },
+                stat2: { value: "10%", label: "Conversion Rate" }
+            },
+            10: {
+                title: "Premium Courses - Mastery",
+                emoji: "🎓",
+                stat1: { value: "960", label: "Active Students" },
+                stat2: { value: "85%", label: "Completion Rate" }
+            },
+            11: {
+                title: "Mentorship - Scaling",
+                emoji: "👨‍🏫",
+                stat1: { value: "240", label: "Mentees" },
+                stat2: { value: "300%", label: "ROI" }
+            },
+            12: {
+                title: "Equity Partnership - Strategic Alliance",
+                emoji: "🤝",
+                stat1: { value: "60", label: "Partners" },
+                stat2: { value: "$900K", label: "LTV" }
+            }
+        };
+
+        const phaseInfo = {
+            1: {
+                title: "Phase 1: Rebuilding Perception and Focusing on Value (Months 1-2)",
+                content: `
+                    <p>This initial phase aims to redefine audience perception and build a strong foundation of organic engagement without direct sales pressure.</p>
+                    <h3>Content Strategy Overhaul</h3>
+                    <ul>
+                        <li><strong>Prioritize Value-Driven Content:</strong> Stop producing videos focused on direct sales or constant lead magnet redirects. Deliver pure, unconditional value to the audience.</li>
+                        <li><strong>Remove Bio Link:</strong> Temporarily remove the sales link from the bio, replacing it with a casual, inviting description reflecting the new value-focused approach.</li>
+                        <li><strong>Personal Branding Focus:</strong> Center all content around the creator's image, avoiding third-party photos to reinforce 'Richard's' identity and authority.</li>
+                        <li><strong>Authenticity and Realness:</strong> Amplify the authentic 'real deal' vibe by showcasing daily routines, behind-the-scenes, and the creator’s personality, leveraging identification and vulnerability to connect with the audience.</li>
+                    </ul>
+                    <h3>Reels Optimization</h3>
+                    <ul>
+                        <li><strong>Dynamic Pacing and Hooks:</strong> Use faster editing rhythms, ensuring peak interest within the first 3-5 seconds. Create compelling visual and textual hooks to disrupt doomscrolling.</li>
+                        <li><strong>Resonant Content:</strong> Ensure each video delivers clear value and aligns with the audience’s pains and desires, using competitor analysis ('spiderweb of creators') for validated content ideas.</li>
+                        <li><strong>Retention Tactics:</strong> Incorporate video loops and 'VHVF' strategies to boost watch time and encourage sharing, turning viewers into reach multipliers.</li>
+                    </ul>
+                    <h3>Publishing Strategy</h3>
+                    <ul>
+                        <li><strong>Frequency:</strong> Post 5 reels per week and 1 feed post. Reels focus on value and connection; feed posts emphasize brand perception.</li>
+                        <li><strong>Performance Analysis:</strong> Closely monitor engagement metrics to identify high-performing content, informing future lead magnet and sales strategies.</li>
+                    </ul>
+                    <h3>Stories: Engagement and Free Value</h3>
+                    <ul>
+                        <li><strong>Active Interaction:</strong> Use stories for authentic engagement, responding to questions and sharing complex insights for free, activating the psychology of reciprocity by offering value without immediate return expectations.</li>
+                    </ul>
+                `
+            },
+            2: {
+                title: "Phase 2: Expanding Visibility and Creating Need (Post Phase 1)",
+                content: `
+                    <p>After establishing strong engagement and positive perception, this phase focuses on expanding visibility and creating a 'need' for future offers.</p>
+                    <h3>Visibility Expansion</h3>
+                    <ul>
+                        <li><strong>Strategic Partnerships:</strong> Appear on niche-relevant podcasts to leverage their authority and reach, driving qualified organic traffic and positioning the creator as an expert.</li>
+                        <li><strong>Niche Page Acquisition:</strong> Consider acquiring affordable niche pages to indirectly promote the creator’s content without revealing ownership, accessing new audiences and social validation.</li>
+                        <li><strong>Community Engagement:</strong> Participate in relevant groups and communities as a 'page' or 'entity' sharing insights, paving the way for broader strategies.</li>
+                    </ul>
+                    <h3>Clippers Program</h3>
+                    <ul>
+                        <li><strong>Platform Integration:</strong> Launch a 'clippers' program on platforms like Whop, where individuals edit and share video snippets.</li>
+                        <li><strong>Incentives and Social Proof:</strong> Use groups to showcase the profit potential of promoting the creator, encouraging similar pages to repost content, driving organic and viral reach.</li>
+                    </ul>
+                    <h3>Creating Need (Scarcity and Urgency)</h3>
+                    <ul>
+                        <li><strong>Problem-Solution Narrative:</strong> Use posts to highlight problems (e.g., 'How AI is reshaping markets, and you risk falling behind'), gradually positioning future offers as solutions.</li>
+                        <li><strong>Opportunity Framing:</strong> Foster a sense of 'major opportunity, but act fast,' leveraging scarcity and urgency psychology to drive action.</li>
+                    </ul>
+                `
+            },
+            3: {
+                title: "Phase 3: Building the Sales Funnel and Launching Products (Post Phase 2)",
+                content: `
+                    <p>With visibility and need established, this phase focuses on conversion and building a sustainable sales funnel.</p>
+                    <h3>Lead Magnet Launch (Basic/Intermediate AI Course)</h3>
+                    <ul>
+                        <li><strong>Strategic Content:</strong> Develop a course teaching basic to intermediate AI skills, enabling creation but not independent selling, fostering healthy dependency for future funnel stages.</li>
+                        <li><strong>Timely Promotion:</strong> Announce the lead magnet via stories (weekly) and posts (biweekly), using CTAs like 'comment AI to receive.'</li>
+                        <li><strong>Anticipation and Launch:</strong> Use acquired niche pages to build anticipation and drive qualified traffic to the creator’s main page.</li>
+                    </ul>
+                    <h3>Free Community Creation</h3>
+                    <ul>
+                        <li><strong>Networking and Value:</strong> Offer a free community for lead magnet participants to network and share experiences, enhancing belonging and loyalty.</li>
+                        <li><strong>Sales Transition:</strong> Gradually introduce sales within the community, leveraging established trust and value.</li>
+                    </ul>
+                    <h3>Progressive Sales Funnel</h3>
+                    <ul>
+                        <li><strong>Need Identification:</strong> Address community members’ inability to sell AI creations, positioning the next offer as the solution to poor sales performance.</li>
+                        <li><strong>VIP Community Area:</strong> Create a VIP section with advanced courses and monthly networking lives, identifying high-potential members.</li>
+                        <li><strong>Scalable Mentorship:</strong> Offer exclusive mentorship for top performers to scale from 10k to 100k, with personalized strategies and private access.</li>
+                    </ul>
+                    <h3>Growth and Partnership Strategies</h3>
+                    <ul>
+                        <li><strong>Talent Identification:</strong> Select successful mentees to teach in the community (social proof) and collaborate on new projects.</li>
+                        <li><strong>Strategic Acquisition:</strong> Consider acquiring thriving mentee businesses for profit-sharing partnerships.</li>
+                    </ul>
+                    <h3>Engagement and Viralization Tactics</h3>
+                    <ul>
+                        <li><strong>Referral System:</strong> Implement a referral program where members earn a free VIP month for inviting others, boosting organic growth.</li>
+                        <li><strong>AI University (Future):</strong> Establish an 'AI University' with successful mentees as instructors, amplifying social proof and expertise.</li>
+                        <li><strong>Instagram Highlights:</strong> Showcase mentee results in Instagram highlights year-round for ongoing anticipation and social proof.</li>
+                    </ul>
+                    <h3>Launch Cycle</h3>
+                    <ul>
+                        <li><strong>Temporary Closure:</strong> Close the community to new members after two weeks, focusing on existing member value and creating exclusivity for future cycles.</li>
+                        <li><strong>Process Restart:</strong> Relaunch in cycles, leveraging successes and lessons learned.</li>
+                    </ul>
+                `
+            }
+        };
+
+        function showModal(phase, step) {
+            const info = levelInfo[step];
+            const phaseDetails = phaseInfo[phase];
+            modalTitle.textContent = phaseDetails.title;
+            modalContent.innerHTML = phaseDetails.content;
+            character.style.setProperty('--before-content', `"${info.emoji}"`);
+            modal.classList.add('show');
+            modalOverlay.classList.add('show');
+        }
+
+        function hideModal() {
+            modal.classList.remove('show');
+            modalOverlay.classList.remove('show');
+        }
+
+        levels.forEach(level => {
+            level.addEventListener('click', () => {
+                // Remove active class from all levels
+                levels.forEach(l => l.classList.remove('active'));
+                // Add active class to clicked level
+                level.classList.add('active');
+
+                // Get step number and determine phase
+                const step = parseInt(level.dataset.step);
+                let phase;
+                if (step <= 4) phase = 1;
+                else if (step <= 8) phase = 2;
+                else phase = 3;
+
+                // Show modal
+                showModal(phase, step);
+
+                // Position character near clicked level
+                const levelRect = level.getBoundingClientRect();
+                const topPosition = levelRect.top + window.scrollY + (levelRect.height / 2) - (character.offsetHeight / 2);
+                character.style.top = `${topPosition}px`;
+            });
+        });
+
+        modalClose.addEventListener('click', hideModal);
+        modalOverlay.addEventListener('click', hideModal);
+
+        // Optional: Initialize with first level selected
+        if (levels.length > 0) {
+            levels[0].click();
+        }
+    </script>
+</body>
+</html>
